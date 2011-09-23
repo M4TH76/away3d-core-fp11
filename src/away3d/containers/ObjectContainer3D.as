@@ -1,4 +1,4 @@
-package away3d.containers
+﻿package away3d.containers
 {
 	import away3d.arcane;
 	import away3d.core.base.Object3D;
@@ -365,7 +365,27 @@ package away3d.containers
 			child.setParent(null);
 			if (!child._explicitPartition) child.implicitPartition = null;
 		}
-		
+		/**
+		 * Removes all 3d objects from the child array of the container
+		 *
+		 * @param	child	The 3d object to be removed
+		 * @throws	Error	ObjectContainer3D.removeChild(null)
+		 */
+		function removeChildren(beginIndex:int = 0, endIndex:int = 0x7fffffff):void
+		{
+			if(beginIndex < 0){
+				endIndex = -beginIndex-1
+				beginIndex = 0
+			}else if(endIndex < 0){
+				endIndex = _children.length + endIndex-1
+			}
+
+			var removedChildren:Array = _children.splice(beginIndex, endIndex-beginIndex+1);
+			for each(var child in removedChildren){
+				child.setParent(null);
+				if (!child._explicitPartition) child.implicitPartition = null;
+			}
+		}
 		/**
 		 * Retrieves the child object at the given index.
 		 * @param index The index of the object to be retrieved.
