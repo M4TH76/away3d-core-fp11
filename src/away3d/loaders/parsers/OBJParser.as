@@ -1,4 +1,4 @@
-package away3d.loaders.parsers
+﻿package away3d.loaders.parsers
 {
 	import away3d.arcane;
 	import away3d.core.base.Geometry;
@@ -10,8 +10,7 @@ package away3d.loaders.parsers
 	import away3d.loaders.misc.ResourceDependency;
 	import away3d.materials.BitmapMaterial;
 	import away3d.materials.methods.BasicSpecularMethod;
-	import away3d.tools.utils.TextureUtils;
-
+	
 	import flash.display.BitmapData;
 	import flash.net.URLRequest;
 	import flash.utils.ByteArray;
@@ -41,7 +40,7 @@ package away3d.loaders.parsers
 		private var _objectIndex : uint;
 		private var _realIndices : Array;
 		private var _vertexIndex : uint;
-
+		
 		private var _mtlLib : Boolean;
 		private var _mtlLibLoaded : Boolean = true;
 		private var _idCount : uint;
@@ -116,17 +115,47 @@ package away3d.loaders.parsers
 				
 				var asset:BitmapDataAsset = resourceDependency.assets[0] as BitmapDataAsset;
 				
-				if (asset){
-					var lm:LoadedMaterial = new LoadedMaterial();
-					lm.materialID = resourceDependency.id;
-					lm.bitmapData = isBitmapDataValid(asset.bitmapData)? asset.bitmapData : defaultBitmapData ;
+				if (asset)
+				{
+					var idComponents:Array = resourceDependency.id.split(",");
 					
-					_materialLoaded.push(lm);
+					var loadedMaterial:LoadedMaterial = getOrCreateLoadedMaterial(idComponents[0]);
+					var bitmapData:BitmapData = isBitmapDataValid(asset.bitmapData) ? asset.bitmapData : defaultBitmapData;
 					
-					if(_meshes.length>0)
-						applyMaterial(lm);
+					//trace(idComponents[1]);
+					
+					if(idComponents[1] == "normalMap") loadedMaterial.normalMapData = bitmapData;
+					else loadedMaterial.bitmapData = bitmapData;
+/*					
+					if(_meshes.length > 0)
+					{
+						applyMaterial(loadedMaterial);
+						applyNormalMap(loadedMaterial);
+					}*/					
 				}
 			}
+		}
+		
+		private function getOrCreateLoadedMaterial(id:String) : LoadedMaterial
+		{
+			var loadedMaterial:LoadedMaterial = null;
+			
+			for each(var material:LoadedMaterial in _materialLoaded)
+			{
+				if(material.materialID == id)
+				{
+					loadedMaterial = material;
+					break;
+				}
+			}
+			
+			if(loadedMaterial == null) 
+			{
+				_materialLoaded.push(loadedMaterial = new LoadedMaterial());
+				loadedMaterial.materialID = id;
+			}
+			
+			return loadedMaterial;
 		}
 		
 		/**
@@ -140,8 +169,8 @@ package away3d.loaders.parsers
 			
 			_materialLoaded.push(lm);
 			
-			if(_meshes.length>0)
-				applyMaterial(lm);
+		/*	if(_meshes.length>0)
+				applyMaterial(lm);*/
 		}
 		
 		/**
@@ -198,7 +227,7 @@ package away3d.loaders.parsers
 					
 				} catch(e:Error){
 					parsingFailure = true;
-					trace("parsing failure");
+					trace("parsing failure" + e.getStackTrace());
 					
 					//TODO: DEAL WITH THIS ERROR!
 					return PARSING_DONE;
@@ -273,7 +302,7 @@ package away3d.loaders.parsers
 				bmMaterial = new BitmapMaterial(defaultBitmapData);
 				mesh = new Mesh(bmMaterial, geometry);
 				meshid = _meshes.length;
-				mesh.name = "obj"+meshid;
+				mesh.name = groups[g].name || "obj"+meshid;
 				_meshes[meshid] = mesh;
 				
 				if(groups[g].materialID != ""){
@@ -549,7 +578,7 @@ package away3d.loaders.parsers
 			
 			_currentMaterialGroup.faces.push(face);
 		}
-		
+	
 		private function parseMtl(data : String):void
 		{
 			var materialDefinitions:Array = data.split('newmtl');
@@ -566,6 +595,8 @@ package away3d.loaders.parsers
 			var specular:Number;
 			var alpha:Number;
 			var mapkd:String;
+			
+			var normalMap:String;
 			
 			for(var i:uint = 0;i<materialDefinitions.length;++i){
 				
@@ -630,9 +661,20 @@ package away3d.loaders.parsers
 								case "map_Kd":
 									mapkd = parseMapKdString(trunk);
 									mapkd = mapkd.replace(/\\/g, "/");
+									break;
+									
+								case  "bump":
+									normalMap = trunk.pop().replace(/\\/g, "/");
 							}
 						}
 					}
+				}
+				
+				if(normalMap)
+				{
+					addDependency(_lastMtlID + ",normalMap", new URLRequest(normalMap));
+					
+					normalMap = null;
 				}
 				
 				if(mapkd != ""){
@@ -653,7 +695,7 @@ package away3d.loaders.parsers
 						_materialSpecularData.push(specularData);
 					}
 					
-					addDependency(_lastMtlID, new URLRequest(mapkd));
+					addDependency(_lastMtlID + ",material", new URLRequest(mapkd));
 					
 					
 				} else if(useColor && !isNaN(diffuseColor)){
@@ -664,6 +706,7 @@ package away3d.loaders.parsers
 					if(alpha == 0)
 						trace("Warning: an alpha value of 0 was found in mtl color tag (Tr or d) ref:"+_lastMtlID+", mesh(es) using it will be invisible!");
 					
+
 					lm.bitmapData = new BitmapData(256, 256, (alpha == 1)? false : true, diffuseColor); 
 					lm.ambientColor = ambientColor;
 					
@@ -675,9 +718,6 @@ package away3d.loaders.parsers
 					}
 					
 					_materialLoaded.push(lm);
-					
-					if(_meshes.length>0)
-						applyMaterial(lm);
 					
 				}
 			}
@@ -756,6 +796,11 @@ package away3d.loaders.parsers
 					mat.bitmapData = lm.bitmapData;
 					mat.ambientColor = lm.ambientColor;
 					
+					if(mat.normalMap == null && lm.normalMapData != null)
+					{
+						mat.normalMap = lm.normalMapData;
+					}
+					
 					if(lm.specularMethod){
 						mat.specularMethod = lm.specularMethod;
 					} else if(_materialSpecularData){
@@ -770,8 +815,8 @@ package away3d.loaders.parsers
 						}
 					}
 					
-					_meshes.splice(i, 1);
-					--i;
+				//	_meshes.splice(i, 1);
+				//	--i;
 				}
 			}
 		}
@@ -782,7 +827,10 @@ package away3d.loaders.parsers
 				return;
 			
 			for(var i:uint = 0; i <_materialLoaded.length;++i)
+			{
 				applyMaterial(_materialLoaded[i]);
+
+			}
 		}
 		
 	}
@@ -823,6 +871,7 @@ class LoadedMaterial
 {
 	public var materialID:String;
 	public var bitmapData:BitmapData;
+	public var normalMapData:BitmapData;
 	
 	public var specularMethod:BasicSpecularMethod;
 	public var ambientColor:uint = 0xFFFFFF;
@@ -835,4 +884,3 @@ class FaceData
 	public var normalIndices : Vector.<uint> = new Vector.<uint>();
 	public var indexIds : Vector.<String> = new Vector.<String>();	// used for real index lookups
 }
-
