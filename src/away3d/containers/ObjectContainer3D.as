@@ -21,42 +21,81 @@
 	 */
 	public class ObjectContainer3D extends Object3D implements IAsset
 	{
-		private var _children : Vector.<ObjectContainer3D>;
-
-		private var _mouseChildren : Boolean = true;
+		/** @private */
 		arcane var _implicitMouseEnabled : Boolean = true;
+		/**
+		 * @private
+		 * The space partition used for this object, possibly inherited from its parent.
+		 */
+		arcane function get implicitPartition() : Partition3D
+		{
+			return _implicitPartition;
+		}
 		
-		protected var _scene : Scene3D;
+		arcane function set implicitPartition(value : Partition3D) : void
+		{
+			if (value == _implicitPartition) return;
+			
+			var i : uint;
+			var len : uint = _children.length;
+			var child : ObjectContainer3D;
+			
+			_implicitPartition = value;
+			
+			while (i < len) {
+				child = _children[i++];
+				// assign implicit partition if no explicit one is given
+				if (!child._explicitPartition) child.implicitPartition = value;
+			}
+		}
+		
+		arcane function setParent(value : ObjectContainer3D) : void
+		{
+			_parent = value;
+			
+			updateMouseChildren();
+			
+			if (value == null) {
+				scene = null;
+				return;
+			}
+			
+			invalidateSceneTransform();
+		}
+		
+		private var _children : Vector.<ObjectContainer3D> = new Vector.<ObjectContainer3D>();
+		private var _mouseChildren : Boolean = true;
 		private var _oldScene : Scene3D;
-		protected var _parent : ObjectContainer3D;
-		
-		protected var _sceneTransform : Matrix3D = new Matrix3D();
-		protected var _sceneTransformDirty : Boolean = true;
 		private var _inverseSceneTransform : Matrix3D = new Matrix3D();
 		private var _inverseSceneTransformDirty : Boolean = true;
 		private var _scenePosition : Vector3D = new Vector3D();
 		private var _scenePositionDirty : Boolean = true;
-		
-		// _explicitPartition is what the user explicitly set as the partition
-		// implicitPartition is what is inherited from the parents if it doesn't have its own explicitPartition
-		// this allows not having to traverse the scene graph to figure out what partition is set
-		protected var _explicitPartition : Partition3D;
-		protected var _implicitPartition : Partition3D;
-
 		private var _explicitVisibility : Boolean = true;
-
-		// visibility passed on from parents
-		private var _implicitVisibility : Boolean = true;
-
-		/**
-		 * Creates a new ObjectContainer3D object.
-		 */
-		public function ObjectContainer3D()
+		private var _implicitVisibility : Boolean = true; // visibility passed on from parents
+		
+		protected var _scene : Scene3D;
+		protected var _parent : ObjectContainer3D;
+		protected var _sceneTransform : Matrix3D = new Matrix3D();
+		protected var _sceneTransformDirty : Boolean = true;
+		// these vars allow not having to traverse the scene graph to figure out what partition is set
+		protected var _explicitPartition : Partition3D; // what the user explicitly set as the partition
+		protected var _implicitPartition : Partition3D; // what is inherited from the parents if it doesn't have its own explicitPartition
+		
+		protected function updateMouseChildren() : void
 		{
-			super();
-			_children = new Vector.<ObjectContainer3D>();
+			if (_parent) {
+				_implicitMouseEnabled = _parent._implicitMouseEnabled && _parent._mouseChildren;
+				var len : uint = _children.length;
+				for (var i : uint = 0; i < len; ++i)
+					_children[i].updateMouseChildren();
+			} else {
+				_implicitMouseEnabled = true;
+			}
 		}
-
+		
+		/**
+		 * 
+		 */
 		public function get mouseChildren() : Boolean
 		{
 			return _mouseChildren;
@@ -82,9 +121,8 @@
 
 			_explicitVisibility = value;
 
-			for (var i : uint = 0; i < len; ++i) {
+			for (var i : uint = 0; i < len; ++i)
 				_children[i].updateImplicitVisibility();
-			}
 		}
 
 		arcane function get isVisible() : Boolean
@@ -106,6 +144,7 @@
 				sceneTransform.copyColumnTo(3, _scenePosition);
 				_scenePositionDirty = false;
 			}
+			
 			return _scenePosition;
 		}
 		
@@ -118,10 +157,13 @@
 			var len : uint = _children.length;
 			var min : Number = Number.POSITIVE_INFINITY;
 			var m : Number;
+			
 			while (i < len) {
 				m = _children[i++].minX;
-				if (m < min) min = m;
+				if (m < min)
+					min = m;
 			}
+			
 			return min;
 		}
 		
@@ -134,10 +176,13 @@
 			var len : uint = _children.length;
 			var min : Number = Number.POSITIVE_INFINITY;
 			var m : Number;
+			
 			while (i < len) {
 				m = _children[i++].minY;
-				if (m < min) min = m;
+				if (m < min)
+					min = m;
 			}
+			
 			return min;
 		}
 		
@@ -150,10 +195,13 @@
 			var len : uint = _children.length;
 			var min : Number = Number.POSITIVE_INFINITY;
 			var m : Number;
+			
 			while (i < len) {
 				m = _children[i++].minZ;
-				if (m < min) min = m;
+				if (m < min)
+					min = m;
 			}
+			
 			return min;
 		}
 		
@@ -167,10 +215,13 @@
 			var len : uint = _children.length;
 			var max : Number = Number.NEGATIVE_INFINITY;
 			var m : Number;
+			
 			while (i < len) {
 				m = _children[i++].maxX;
-				if (m > max) max = m;
+				if (m > max)
+					max = m;
 			}
+			
 			return max;
 		}
 		
@@ -183,10 +234,13 @@
 			var len : uint = _children.length;
 			var max : Number = Number.NEGATIVE_INFINITY;
 			var m : Number;
+			
 			while (i < len) {
 				m = _children[i++].maxY;
-				if (m > max) max = m;
+				if (m > max)
+					max = m;
 			}
+			
 			return max;
 		}
 		
@@ -199,10 +253,13 @@
 			var len : uint = _children.length;
 			var max : Number = Number.NEGATIVE_INFINITY;
 			var m : Number;
+			
 			while (i < len) {
 				m = _children[i++].maxZ;
-				if (m > max) max = m;
+				if (m > max)
+					max = m;
 			}
+			
 			return max;
 		}
 		
@@ -218,34 +275,10 @@
 		public function set partition(value : Partition3D) : void
 		{
 			_explicitPartition = value;
+			
 			implicitPartition = value 	? value :
 								_parent	? parent.implicitPartition
 										: null;
-		}
-		
-		/**
-		 * The space partition used for this object, possibly inherited from its parent.
-		 */
-		arcane function get implicitPartition() : Partition3D
-		{
-			return _implicitPartition;
-		}
-		
-		arcane function set implicitPartition(value : Partition3D) : void
-		{
-			if (value == _implicitPartition) return;
-			
-			var i : uint;
-			var len : uint = _children.length;
-			var child : ObjectContainer3D;
-			
-			_implicitPartition = value;
-			
-			while (i < len) {
-				child = _children[i++];
-				// assign implicit partition if no explicit one is given
-				if (!child._explicitPartition) child.implicitPartition = value;
-			}
 		}
 		
 		/**
@@ -255,6 +288,7 @@
 		override public function set transform(value : Matrix3D) : void
 		{
 			super.transform = value;
+			
 			invalidateSceneTransform();
 		}
 		
@@ -263,8 +297,48 @@
 		 */
 		public function get sceneTransform() : Matrix3D
 		{
-			if (_sceneTransformDirty) updateSceneTransform();
+			if (_sceneTransformDirty)
+				updateSceneTransform();
+			
 			return _sceneTransform;
+		}
+		
+		/**
+		 * A reference to the Scene3D object to which this object belongs.
+		 */
+		public function get scene() : Scene3D
+		{
+			return _scene;
+		}
+		
+		public function set scene(value : Scene3D) : void
+		{
+			var i : uint;
+			var len : uint = _children.length;
+			
+			while (i < len)
+				_children[i++].scene = value;
+			
+			if (_scene == value)
+				return;
+			
+			// test to see if we're switching roots while we're already using a scene partition
+			if (value == null)
+				_oldScene = _scene;
+			
+			if (_explicitPartition && _oldScene && _oldScene != _scene)
+				partition = null;
+			
+			if (value)
+				_oldScene = null;
+			// end of stupid partition test code
+			
+			_scene = value;
+			
+			if(_scene)
+				_scene.dispatchEvent(new Scene3DEvent(Scene3DEvent.ADDED_TO_SCENE, this));
+			else if(_oldScene)
+				_oldScene.dispatchEvent(new Scene3DEvent(Scene3DEvent.REMOVED_FROM_SCENE, this));
 		}
 		
 		/**
@@ -277,6 +351,7 @@
 				_inverseSceneTransform.invert();
 				_inverseSceneTransformDirty = false;
 			}
+			
 			return _inverseSceneTransform;
 		}
 		
@@ -288,19 +363,14 @@
 			return _parent;
 		}
 		
-		arcane function setParent(value : ObjectContainer3D) : void
+		/**
+		 * Creates a new ObjectContainer3D object.
+		 */
+		public function ObjectContainer3D()
 		{
-			_parent = value;
-
-			updateMouseChildren();
-
-			if (value == null) {
-				scene = null;
-				return;
-			}
-			
-			invalidateSceneTransform();
+			super();
 		}
+		
 
 		public function contains(child : ObjectContainer3D) : Boolean
 		{
@@ -318,9 +388,11 @@
 			if (child == null)
 				throw new Error("Parameter child cannot be null.");
 
-			if (child._parent) child._parent.removeChild(child);
+			if (child._parent)
+				child._parent.removeChild(child);
 
-			if (!child._explicitPartition) child.implicitPartition = _implicitPartition;
+			if (!child._explicitPartition)
+				child.implicitPartition = _implicitPartition;
 			
 			child._parent = this;
 			child.scene = _scene;
@@ -329,6 +401,7 @@
 			child.updateImplicitVisibility();
 
 			_children.push(child);
+			
 			return child;
 		}
 		
@@ -340,7 +413,7 @@
 		public function addChildren(...childarray):void
 		{
 			for each (var child:ObjectContainer3D in childarray)
-			addChild(child);
+				addChild(child);
 		}
 		
 		/**
@@ -410,12 +483,14 @@
 		override public function lookAt(target:Vector3D, upAxis:Vector3D = null):void
 		{
 			super.lookAt(target, upAxis);
+			
 			invalidateSceneTransform();
 		}
 		
 		override public function translateLocal(axis : Vector3D, distance : Number) : void
 		{
 			super.translateLocal(axis, distance);
+			
 			invalidateSceneTransform();
 		}
 		
@@ -440,49 +515,19 @@
 			clone.name = name;
 
 			var len : uint = _children.length;
-			for (var i : uint = 0; i < len; ++i) {
+			
+			for (var i : uint = 0; i < len; ++i)
 				clone.addChild(ObjectContainer3D(_children[i].clone()));
-			}
 
 			// todo: implement for all subtypes
 			return clone;
 		}
 		
-		/**
-		 * A reference to the Scene3D object to which this object belongs.
-		 */
-		arcane function get scene() : Scene3D
-		{
-			return _scene;
-		}
-		
-		arcane function set scene(value : Scene3D) : void
-		{
-			var i : uint;
-			var len : uint = _children.length;
-			while (i < len) _children[i++].scene = value;
-			
-			if (_scene == value) return;
-			// test to see if we're switching roots while we're already using a scene partition
-			if (value == null)
-				_oldScene = _scene;
-			if (_explicitPartition && _oldScene && _oldScene != _scene)
-				partition = null;
-			if (value) _oldScene = null;
-			// end of stupid partition test code
-			
-			_scene = value;
-			
-			if(_scene) {
-				_scene.dispatchEvent(new Scene3DEvent(Scene3DEvent.ADDED_TO_SCENE, this));
-			} else if(_oldScene) {
-				_oldScene.dispatchEvent(new Scene3DEvent(Scene3DEvent.REMOVED_FROM_SCENE, this));
-			}
-		}
 
 		override public function rotate(axis : Vector3D, angle : Number) : void
 		{
 			super.rotate(axis, angle);
+			
 			invalidateSceneTransform();
 		}
 
@@ -492,6 +537,7 @@
 		override protected function invalidateTransform() : void
 		{
 			super.invalidateTransform();
+			
 			invalidateSceneTransform();
 		}
 		
@@ -503,13 +549,16 @@
 			_scenePositionDirty = true;
 			_inverseSceneTransformDirty = true;
 			
-			if (_sceneTransformDirty) return;
+			if (_sceneTransformDirty)
+				return;
 			
 			_sceneTransformDirty = true;
 			
 			var i : uint;
 			var len : uint = _children.length;
-			while (i < len) _children[i++].invalidateSceneTransform();
+			
+			while (i < len)
+				_children[i++].invalidateSceneTransform();
 		}
 		
 		/**
@@ -520,8 +569,7 @@
 			if (_parent) {
 				_sceneTransform.copyFrom(_parent.sceneTransform);
 				_sceneTransform.prepend(transform);
-			}
-			else {
+			} else {
 				_sceneTransform.copyFrom(transform);
 			}
 			
@@ -548,26 +596,14 @@
 			return ret;
 		}
 
-		protected function updateMouseChildren() : void
-		{
-			if (_parent) {
-				_implicitMouseEnabled = _parent._implicitMouseEnabled && _parent._mouseChildren;
-				var len : uint = _children.length;
-				for (var i : uint = 0; i < len; ++i)
-					_children[i].updateMouseChildren();
-			}
-			else _implicitMouseEnabled = true;
-		}
-
 		public function updateImplicitVisibility() : void
 		{
 			var len : uint = _children.length;
 
 			_implicitVisibility = _parent._explicitVisibility && _parent._implicitVisibility;
 
-			for (var i : uint = 0; i < len; ++i) {
+			for (var i : uint = 0; i < len; ++i)
 				_children[i].updateImplicitVisibility();
-			}
 		}
 	}
 }

@@ -10,6 +10,8 @@
 	import away3d.loaders.misc.ResourceDependency;
 	import away3d.materials.BitmapMaterial;
 	import away3d.materials.methods.BasicSpecularMethod;
+	import away3d.tools.utils.TextureUtils;
+
 	
 	import flash.display.BitmapData;
 	import flash.net.URLRequest;
@@ -22,6 +24,7 @@
 	 */
 	public class OBJParser extends ParserBase
 	{
+		private var _textData:String;
 		private var _startedParsing : Boolean;
 		private var _charIndex:uint;
 		private var _oldIndex:uint;
@@ -182,6 +185,9 @@
 			var creturn:String = String.fromCharCode(10);
 			var trunk:Array;
 			
+			if(!_startedParsing)
+				_textData = getTextData();
+			
 			if(_textData.indexOf(creturn) == -1)
 				creturn = String.fromCharCode(13);
 			
@@ -227,8 +233,6 @@
 					
 				} catch(e:Error){
 					parsingFailure = true;
-					trace("parsing failure" + e.getStackTrace());
-					
 					//TODO: DEAL WITH THIS ERROR!
 					return PARSING_DONE;
 				}
