@@ -380,7 +380,7 @@
 				endIndex = _children.length + endIndex-1
 			}
 
-			var removedChildren:Array = _children.splice(beginIndex, endIndex-beginIndex+1);
+			var removedChildren:Vector.<ObjectContainer3D> = _children.splice(beginIndex, endIndex-beginIndex+1);
 			for each(var child in removedChildren){
 				child.setParent(null);
 				if (!child._explicitPartition) child.implicitPartition = null;
