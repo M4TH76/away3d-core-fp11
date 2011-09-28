@@ -143,12 +143,11 @@
 		protected override function proceedParsing() : Boolean
 		{
 			if (_data is Bitmap) {
-				var bitmap:Bitmap = _data as Bitmap;
 
-				var asset : BitmapDataAsset = new BitmapDataAsset(bitmap.bitmapData);
+				var asset : BitmapDataAsset = new BitmapDataAsset(Bitmap(_data).bitmapData);
 				finalizeAsset(asset, _fileName);
-				
-				return true;
+
+				return PARSING_DONE;
 			}
 			
 			_byteData = getByteData();
