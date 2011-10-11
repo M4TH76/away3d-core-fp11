@@ -1,4 +1,4 @@
-package away3d.bounds
+﻿package away3d.bounds
 {
 	import away3d.arcane;
 	import away3d.core.base.Geometry;
@@ -106,7 +106,7 @@ package away3d.bounds
 			minY = maxY = vertices[uint(i++)];
 			minZ = maxZ = vertices[uint(i++)];
 
-			while (i < len) {
+			while (i < len-2) {
 				v = vertices[i++];
 				if (v < minX) minX = v;
 				else if (v > maxX) maxX = v;
