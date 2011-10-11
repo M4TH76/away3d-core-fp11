@@ -187,7 +187,7 @@
 		protected var _scene : Scene3D;
 		protected var _parent : ObjectContainer3D;
 		protected var _sceneTransform : Matrix3D = new Matrix3D();
-		protected var _sceneTransformDirty : Boolean = true;
+		//protected var _sceneTransformDirty : Boolean = true;
 		// these vars allow not having to traverse the scene graph to figure out what partition is set
 		protected var _explicitPartition : Partition3D; // what the user explicitly set as the partition
 		protected var _implicitPartition : Partition3D; // what is inherited from the parents if it doesn't have its own explicitPartition
