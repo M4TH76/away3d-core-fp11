@@ -273,8 +273,7 @@
 
 		override protected function updateBounds() : void
 		{
-			// todo: fix bounds
-			_bounds.fromExtremes(-100, -100, 0, 100, 100, 0);
+			_bounds.fromVertices(_vertices)
 			_boundsInvalid = false;
 		}
 
