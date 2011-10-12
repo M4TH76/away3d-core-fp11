@@ -1,4 +1,4 @@
-package away3d.entities
+﻿package away3d.entities
 {
 	import away3d.animators.data.AnimationBase;
 	import away3d.animators.data.AnimationStateBase;
@@ -189,12 +189,31 @@ package away3d.entities
 		{
 			return new BoundingSphere();
 		}
-
-		override protected function updateBounds() : void
-		{
-			_bounds.fromExtremes(-.5, -.5, 0, .5, .5, 0);
-			_boundsInvalid = false;
+		
+		override public function scale(value:Number):void {
+			super.scale(value)
+			_boundsInvalid = true;
 		}
+		override public function set scaleX(scale:Number):void {
+			if (_scaleX != scale) {
+				super.scaleX = scale;
+				_boundsInvalid = true;
+			}
+		}
+		
+		override public function set scaleY(scale:Number):void {
+			if (_scaleY != scale) {
+				super.scaleY = scale;
+				_boundsInvalid = true;
+			}
+		}
+		
+		override protected function updateBounds():void {
+			var w = _width/2 * _scaleX
+			var h = _height/2 * _scaleY
+			_bounds.fromExtremes(-w,-h,0, w,h,0)
+			_boundsInvalid = false;
+		} 
 
 
 		override protected function createEntityPartitionNode() : EntityNode
